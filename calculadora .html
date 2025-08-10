@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Riesgo Operativa 9x3</title>
+    <!-- Incluye Tailwind CSS desde CDN para estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para la fuente Inter y el fondo */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Fondo oscuro similar a GitHub */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4 sm:p-8 flex justify-center items-center">
+    <div class="w-full max-w-4xl bg-gray-800 rounded-2xl p-6 sm:p-10 shadow-lg">
+        <h1 class="text-3xl sm:text-4xl font-bold text-center mb-6 text-indigo-400">
+                Gestión de Riesgo Estrategia 9x3
+        </h1>
+        <p class="text-gray-400 text-center mb-8">
+            Calcula tus puntos de entrada, liquidación y stop loss según tu estrategia de recompra.
+        </p>
+
+        <!-- Sección de Entradas del Usuario -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Tipo de Operativa -->
+            <div class="flex flex-col col-span-1 md:col-span-2">
+                <label class="text-sm font-medium text-gray-300 mb-1">Tipo de Operativa</label>
+                <div class="flex space-x-4">
+                    <div class="flex items-center bg-gray-700 p-3 rounded-md">
+                        <input type="radio" id="long" name="positionType" value="long" checked class="form-radio text-indigo-500">
+                        <label for="long" class="ml-2">Long</label>
+                    </div>
+                    <div class="flex items-center bg-gray-700 p-3 rounded-md">
+                        <input type="radio" id="short" name="positionType" value="short" class="form-radio text-indigo-500">
+                        <label for="short" class="ml-2">Short</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-300 mb-1" for="capital">Capital para Operar ($)</label>
+                <input id="capital" type="number" placeholder="Ej. 1000" class="bg-gray-700 text-white rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            </div>
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-300 mb-1" for="leverage">Apalancamiento (x)</label>
+                <input id="leverage" type="number" placeholder="Ej. 5" class="bg-gray-700 text-white rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            </div>
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-300 mb-1" for="stoploss">Stop Loss (%)</label>
+                <input id="stoploss" type="number" placeholder="Ej. 10" class="bg-gray-700 text-white rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            </div>
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-300 mb-1" for="initialPrice">Precio de Entrada Inicial ($)</label>
+                <input id="initialPrice" type="number" placeholder="Ej. 500.000000" class="bg-gray-700 text-white rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            </div>
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-300 mb-1" for="rebuyPrice1">Precio de Primera Recompra ($)</label>
+                <input id="rebuyPrice1" type="number" placeholder="Ej. 475.000000" class="bg-gray-700 text-white rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            </div>
+            <div class="flex flex-col">
+                <label class="text-sm font-medium text-gray-300 mb-1" for="rebuyPrice2">Precio de Segunda Recompra ($)</label>
+                <input id="rebuyPrice2" type="number" placeholder="Ej. 450.000000" class="bg-gray-700 text-white rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <button id="calculate-btn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition transform hover:scale-105 shadow-xl">
+                Calcular
+            </button>
+            <button id="reset-btn" class="w-full bg-gray-600 text-white font-bold py-3 rounded-xl hover:bg-gray-700 transition transform hover:scale-105 shadow-xl">
+                Restablecer
+            </button>
+        </div>
+
+        <!-- Mensaje de error (oculto por defecto) -->
+        <div id="error-message" class="mt-6 p-4 bg-red-600 rounded-lg text-white font-medium text-center hidden"></div>
+
+        <!-- Sección de Resultados (oculta por defecto) -->
+        <div id="results-section" class="mt-10 hidden">
+            <h2 class="text-2xl font-semibold text-center mb-6 text-indigo-400">Resultados</h2>
+            
+            <!-- Detalles de las Entradas -->
+            <div class="bg-gray-700 rounded-xl p-6 mb-6">
+                <h3 class="text-xl font-bold mb-4 text-gray-200">Detalle de las Entradas</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="p-4 bg-gray-600 rounded-lg">
+                        <p class="font-bold text-lg text-indigo-300">Entrada Inicial</p>
+                        <p>Precio: $<span id="entry1-price">0.000000</span></p>
+                        <p>Monedas: <span id="entry1-quantity">0.000000</span></p>
+                    </div>
+                    <div class="p-4 bg-gray-600 rounded-lg">
+                        <p class="font-bold text-lg text-indigo-300">Primera Recompra</p>
+                        <p>Precio: $<span id="entry2-price">0.000000</span></p>
+                        <p>Monedas: <span id="entry2-quantity">0.000000</span></p>
+                    </div>
+                    <div class="p-4 bg-gray-600 rounded-lg">
+                        <p class="font-bold text-lg text-indigo-300">Segunda Recompra</p>
+                        <p>Precio: $<span id="entry3-price">0.000000</span></p>
+                        <p>Monedas: <span id="entry3-quantity">0.000000</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen de la Posición -->
+            <div class="bg-gray-700 rounded-xl p-6">
+                <h3 class="text-xl font-bold mb-4 text-gray-200">Resumen de la Posición</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 bg-gray-600 rounded-lg">
+                        <p class="font-bold text-lg text-indigo-300">Cantidad Total de Monedas</p>
+                        <p><span id="total-quantity">0.000000</span></p>
+                    </div>
+                    <div class="p-4 bg-gray-600 rounded-lg">
+                        <p class="font-bold text-lg text-indigo-300">Precio Promedio de Entrada</p>
+                        <p>$<span id="average-price">0.000000</span></p>
+                    </div>
+                    <div class="p-4 bg-gray-600 rounded-lg">
+                        <p class="font-bold text-lg text-indigo-300">Precio de Liquidación</p>
+                        <p class="text-red-400 font-semibold">$<span id="liquidation-price">0.000000</span></p>
+                    </div>
+                    <div class="p-4 bg-gray-600 rounded-lg">
+                        <p class="font-bold text-lg text-indigo-300">Precio de Stop Loss</p>
+                        <p class="text-yellow-400 font-semibold">$<span id="stoploss-price">0.000000</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de JavaScript para la lógica de la calculadora -->
+    <script>
+        document.getElementById('calculate-btn').addEventListener('click', calculateRiskControl);
+        document.getElementById('reset-btn').addEventListener('click', resetFields);
+
+        function calculateRiskControl() {
+            // Obtener valores de los inputs
+            const positionType = document.querySelector('input[name="positionType"]:checked').value;
+            const capital = parseFloat(document.getElementById('capital').value);
+            const leverage = parseFloat(document.getElementById('leverage').value);
+            const stopLossPercentage = parseFloat(document.getElementById('stoploss').value);
+            const initialPrice = parseFloat(document.getElementById('initialPrice').value);
+            const rebuyPrice1 = parseFloat(document.getElementById('rebuyPrice1').value);
+            const rebuyPrice2 = parseFloat(document.getElementById('rebuyPrice2').value);
+
+            const errorMessageDiv = document.getElementById('error-message');
+            const resultsSectionDiv = document.getElementById('results-section');
+
+            // Validar entradas
+            if (isNaN(capital) || isNaN(leverage) || isNaN(stopLossPercentage) || isNaN(initialPrice) || isNaN(rebuyPrice1) || isNaN(rebuyPrice2) ||
+                capital <= 0 || leverage <= 0 || initialPrice <= 0 || rebuyPrice1 <= 0 || rebuyPrice2 <= 0) {
+                errorMessageDiv.textContent = 'Por favor, introduce valores numéricos positivos en todos los campos.';
+                errorMessageDiv.classList.remove('hidden');
+                resultsSectionDiv.classList.add('hidden');
+                return;
+            }
+
+            if (stopLossPercentage >= 100) {
+                errorMessageDiv.textContent = 'El Stop Loss no puede ser 100% o más. Por favor, introduce un valor menor.';
+                errorMessageDiv.classList.remove('hidden');
+                resultsSectionDiv.classList.add('hidden');
+                return;
+            }
+            
+            // Validar que los precios de recompra sean correctos según el tipo de operativa
+            if (positionType === 'long') {
+                if (rebuyPrice1 >= initialPrice || rebuyPrice2 >= rebuyPrice1) {
+                    errorMessageDiv.textContent = 'Para una posición LONG, los precios de recompra deben ser menores que el precio anterior.';
+                    errorMessageDiv.classList.remove('hidden');
+                    resultsSectionDiv.classList.add('hidden');
+                    return;
+                }
+            } else if (positionType === 'short') {
+                if (rebuyPrice1 <= initialPrice || rebuyPrice2 <= rebuyPrice1) {
+                    errorMessageDiv.textContent = 'Para una posición SHORT, los precios de recompra deben ser mayores que el precio anterior.';
+                    errorMessageDiv.classList.remove('hidden');
+                    resultsSectionDiv.classList.add('hidden');
+                    return;
+                }
+            }
+
+            // Ocultar mensaje de error si todo es válido
+            errorMessageDiv.classList.add('hidden');
+
+            // ---- CÁLCULOS DE ENTRADAS ----
+            
+            // Entrada Inicial (1% del capital)
+            const capitalEntry1 = capital * 0.01;
+            const quantityEntry1 = (capitalEntry1 * leverage) / initialPrice;
+            const priceEntry1 = initialPrice;
+
+            // Cantidad de la primera recompra (el doble de la entrada inicial)
+            const quantityEntry2 = quantityEntry1 * 2;
+            const priceEntry2 = rebuyPrice1;
+            const capitalEntry2 = (quantityEntry2 * priceEntry2) / leverage;
+
+            // Cantidad total después de las primeras dos entradas
+            const totalQuantityAfter2 = quantityEntry1 + quantityEntry2;
+            // Cantidad de la segunda recompra (el doble de la cantidad total acumulada)
+            const quantityEntry3 = totalQuantityAfter2 * 2;
+            const priceEntry3 = rebuyPrice2;
+            const capitalEntry3 = (quantityEntry3 * priceEntry3) / leverage;
+            
+            // ---- RESUMEN DE LA POSICIÓN ----
+
+            // Cantidad total de monedas compradas
+            const totalQuantity = quantityEntry1 + quantityEntry2 + quantityEntry3;
+            // Capital total usado para abrir la posición
+            const totalCapitalUsed = capitalEntry1 + capitalEntry2 + capitalEntry3;
+
+            // Precio promedio de entrada ponderado
+            const averageEntryPrice = (
+                (capitalEntry1 * priceEntry1) + 
+                (capitalEntry2 * priceEntry2) + 
+                (capitalEntry3 * priceEntry3)
+            ) / totalCapitalUsed;
+
+            // ---- CÁLCULOS FINALES (ajustados para LONG/SHORT) ----
+
+            let liquidationPrice, stopLossPrice;
+
+            // Precio de Liquidación: El precio donde la pérdida total es igual al capital usado.
+            const totalPositionValue = totalCapitalUsed * leverage;
+            const stopLossAmount = capital * (stopLossPercentage / 100);
+            
+            if (positionType === 'long') {
+                liquidationPrice = averageEntryPrice * (1 - totalCapitalUsed / totalPositionValue);
+                const stopLossChange = stopLossAmount / totalPositionValue;
+                stopLossPrice = averageEntryPrice * (1 - stopLossChange);
+            } else { // short
+                liquidationPrice = averageEntryPrice * (1 + totalCapitalUsed / totalPositionValue);
+                const stopLossChange = stopLossAmount / totalPositionValue;
+                stopLossPrice = averageEntryPrice * (1 + stopLossChange);
+            }
+            
+            // Mostrar los resultados en la interfaz con 6 decimales
+            document.getElementById('entry1-price').textContent = priceEntry1.toFixed(6);
+            document.getElementById('entry1-quantity').textContent = quantityEntry1.toFixed(6);
+            
+            document.getElementById('entry2-price').textContent = priceEntry2.toFixed(6);
+            document.getElementById('entry2-quantity').textContent = quantityEntry2.toFixed(6);
+            
+            document.getElementById('entry3-price').textContent = priceEntry3.toFixed(6);
+            document.getElementById('entry3-quantity').textContent = quantityEntry3.toFixed(6);
+
+            document.getElementById('total-quantity').textContent = totalQuantity.toFixed(6);
+            document.getElementById('average-price').textContent = averageEntryPrice.toFixed(6);
+            document.getElementById('liquidation-price').textContent = liquidationPrice.toFixed(6);
+            document.getElementById('stoploss-price').textContent = stopLossPrice.toFixed(6);
+
+            // Mostrar la sección de resultados
+            resultsSectionDiv.classList.remove('hidden');
+        }
+
+        function resetFields() {
+            // Limpiar todos los campos de entrada
+            document.getElementById('capital').value = '';
+            document.getElementById('leverage').value = '';
+            document.getElementById('stoploss').value = '';
+            document.getElementById('initialPrice').value = '';
+            document.getElementById('rebuyPrice1').value = '';
+            document.getElementById('rebuyPrice2').value = '';
+
+            // Restablecer el tipo de operativa a "Long"
+            document.getElementById('long').checked = true;
+
+            // Ocultar la sección de resultados y el mensaje de error
+            document.getElementById('results-section').classList.add('hidden');
+            document.getElementById('error-message').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
