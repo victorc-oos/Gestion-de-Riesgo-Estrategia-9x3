@@ -19,6 +19,4 @@ recompra 2 : (90 monedas)
 
 Siguiendo este principio , hemos desarrollado una calculadora de gestion de riesgo, el cual 
 nos permite saber controlar nuestro stop loos de manera dinamica y el apalacamiento que
-podemos usar de tal forma de no brincarnos nuestra gestion de riesgo ( cuanto dinero nos permitimos perder por operacion)
-
-
+podemos usar de tal forma de no brincarnos nuestra gestion de riesgo ( cuanto dinero nos permitimos perder por operacion).
